@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+lisp_gtest/.vs
+lisp_gtest/lisp_gtest/x64
+lisp_gtest/packages
+lisp_gtest/x64
