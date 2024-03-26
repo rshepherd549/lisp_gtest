@@ -14,7 +14,7 @@ TEST(TestList, TestCreateList)
   const auto list2 = Cons("test", list0);
   EXPECT_EQ(list1, list2);
 
-  EXPECT_EQ(list0, list1);
+  EXPECT_NE(list0, list1);
 }
 
 TEST(TestList, TestFind)
@@ -39,15 +39,13 @@ TEST(TestList, TestFind)
   for (const auto& test: tests)
     EXPECT_EQ(test.expected, test.expression) << test.line << " " + test.msg;
 }
-#if 0
-std::string testMakeList()
-{
-  auto list0 = MakeList();
-  auto list1 = MakeList("a");
-  auto list2 = MakeList("a", "b");
-  auto list2_0 = MakeList("a", MakeList());
-  auto list3_2 = MakeList("a", MakeList("b"), "c");
 
-  return "";
+TEST(TestList, TestListInitializerList)
+{
+  EXPECT_EQ("( ) ", to_string(List({})));
+  EXPECT_EQ("( a ) ", to_string(List({"a"})));
+  EXPECT_EQ("( a b ) ", to_string(List({"a", "b"})));
+  EXPECT_EQ("( a ( ) ) ", to_string(List({"a", List()})));
+  EXPECT_EQ("( a ( b c ) d ) ", to_string(List({"a", List({"b", "c"}), "d"})));
 }
-#endif
+

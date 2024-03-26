@@ -29,14 +29,14 @@ List::List(Cons_ const * cons):
 }
 
 List::List(const List& list, const Car_t& car):
-  cons_{new Cons_{car, list.cons_, 1}}
+  cons_{new Cons_{std::make_unique<Car_t const>(car), list.cons_, 1}}
 {
   if (cons_->cdr_)
     ++cons_->cdr_->numWatchers_;
 }
 
 List::List(const List& list):
-  List{list.cons_}
+  List(list.cons_)
 {
 }
 List& List::operator=(List list)
@@ -44,54 +44,62 @@ List& List::operator=(List list)
   std::swap(cons_, list.cons_);
   return *this;
 }
-const Car_t& List::Car() const
+
+List::List(const std::initializer_list<Car_t>& contents)
 {
-  return cons_ ? cons_->car_ : CarNull;
+  for (auto car = rbegin(contents); car != rend(contents); ++car)
+  {
+    cons_ = new Cons_{std::make_unique<Car_t const>(*car), cons_, 1};
+  }
+}
+
+Car_t const * List::Car() const
+{
+  return cons_ ? cons_->car_.get() : nullptr;
 }
 List List::Cdr() const
 {
-  return cons_ ? List{cons_->cdr_} : EmptyList;
-}
-
-List MakeList()
-{
-  return List{};
-}
-List MakeList(const Car_t& car)
-{
-  return Cons(car, EmptyList);
-}
-
-bool List::IsEmpty() const
-{
-  return !cons_;
+  return cons_ ? List(cons_->cdr_) : EmptyList;
 }
 
 List Cons(const Car_t& car, const List& cdr)
 {
-  return List{cdr, car};
+  return List(cdr, car);
 }
-const Car_t& Car(const Car_t& car)
+Car_t const * Car(const Car_t& car)
 {
   const auto list = std::get_if<List>(&car);
-  return list ? list->Car() : car;
+  return list ? list->Car() : nullptr;
 }
 List Cdr(const Car_t& car)
 {
   const auto list = std::get_if<List>(&car);
-  return list ? list->Cdr() : List{};
+  return list ? list->Cdr() : List();
 }
 bool IsEmptyList(const Car_t& car)
 {
   const auto list = std::get_if<List>(&car);
-  return !list || list->IsEmpty();
+  return !list || !list->Car();
 }
 bool IsAtom(const Car_t& car)
 {
   const auto list = std::get_if<List>(&car);
   return !list;
 }
-bool IsEqual(const Car_t& lhs, const Car_t& rhs)
+bool operator==(const List& lhs, const List& rhs)
+{
+  const auto carLhs = lhs.Car();
+  const auto carRhs = rhs.Car();
+
+  if (!carLhs != !carRhs)
+    return false;
+  if (!carLhs)
+    return true;
+
+  return *carLhs == *carRhs
+      && Cdr(lhs) == Cdr(rhs);
+}  
+bool operator==(const Car_t& lhs, const Car_t& rhs)
 {
   if (lhs.index() != rhs.index())
     return false;
@@ -109,21 +117,21 @@ bool IsEqual(const Car_t& lhs, const Car_t& rhs)
     {
       const auto& lhsList = std::get<List>(lhs);
       if (const auto rhsList = std::get_if<List>(&rhs))
-        return IsEqual(Car(lhsList),Car(*rhsList))
-            && IsEqual(Cdr(lhsList),Cdr(*rhsList));
+        return lhsList == *rhsList;
       break;
     }
   }
   return false;
 }
-bool operator==(const List& lhs, const List& rhs)
-{
-  return IsEqual(lhs, rhs);
-}
 
-std::string Print(const List& list)
+std::string PrintContents(const List& list)
 {
-  return IsEmptyList(list) ? "" : to_string(Car(list)) + Print(Cdr(list));
+  const auto car = Car(list);
+  return car ? (to_string(*car) + PrintContents(Cdr(list))) : "";
+}
+std::string to_string(const List& list)
+{
+  return "( " + PrintContents(list) + ") ";
 }
 std::string to_string(const Car_t& car)
 {
@@ -131,9 +139,17 @@ std::string to_string(const Car_t& car)
     return std::string{*text} + " ";
 
   if (const auto list = std::get_if<List>(&car))
-    return "( " + Print(*list) + ") ";
+    return to_string(*list);
 
   return "Unknown type?";
+}
+std::ostream& operator<<(std::ostream& os, const Car_t& car)
+{
+  return os << to_string(car);
+}
+std::ostream& operator<<(std::ostream& os, const List& list)
+{
+  return os << to_string(list);
 }
 
 List CreateInitialContext_()
@@ -174,14 +190,8 @@ List FindKey(const List& list, const Car_t& key)
 {
   return Find(list, [&key](const List& list)
     {
-      return IsEqual(Car(list), key);
-    });
-}
-List FindKeyValue(const List& list, const Car_t& key)
-{
-  return Find(list, [&key](const List& list)
-    {
-      return IsEqual(Car(list), key);
+      const auto car = Car(list);
+      return car && (*car == key);
     });
 }
 
@@ -195,14 +205,10 @@ List Read(const std::string_view text)
 {
   return ReadList(text.cbegin(), text.cend());
 }
-List Eval(const List& list, const List& context)
+List Eval(const List& list, const List& /*context*/)
 {
   if (IsEmptyList(list))
     return list;
 
-  const auto& car = Car(list);
-
-  const auto& contextEntry = FindKeyValue(context, car);
-  (void*)(&contextEntry);
   return list;
 }

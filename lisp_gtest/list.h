@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <iostream>
 #include <variant>
 
 template <typename TVariant, typename TType, size_t idx = 0>
@@ -39,7 +40,7 @@ extern const Car_t CarNull;
 
 struct Cons_
 {
-  Car_t const & car_;
+  std::unique_ptr<Car_t const> const car_;
   Cons_ const * cdr_{};
   mutable size_t numWatchers_{};
 };
@@ -56,33 +57,29 @@ public:
   List(const List& list, const Car_t& value);
   List& operator=(List list);
 
-  const Car_t& Car() const;
+  List(const std::initializer_list<Car_t>& contents);
+
+  Car_t const * Car() const;
   List Cdr() const;
-  bool IsEmpty() const;
 };
 
 List Cons(const Car_t& car, const List& cdr);
-const Car_t& Car(const Car_t& car);
+Car_t const * Car(const Car_t& car);
 List Cdr(const Car_t& car);
-
-List MakeList();
-List MakeList(const Car_t& car);
-
-template <typename... Rest>
-List MakeList(const Car_t& car, Rest... cdr) {
-  return Cons(car, MakeList(cdr...));
-}
 
 bool IsEmptyList(const Car_t& car);
 bool IsAtom(const Car_t& car);
-bool IsEqual(const Car_t& lhs, const Car_t& rhs);
+bool operator==(const List& lhs, const List& rhs);
+bool operator==(const Car_t& lhs, const Car_t& rhs);
+std::string to_string(const List& list);
 std::string to_string(const Car_t& car);
+std::ostream& operator<<(std::ostream& os, const Car_t& car);
+std::ostream& operator<<(std::ostream& os, const List& list);
 
 const List& InitialContext();
 
 List Find(const List& list, const std::function<bool(const List&)>& pred);
 List FindKey(const List& list, const Car_t& key);
-List FindKeyValue(const List& list, const Car_t& key);
 
 List Read(const std::string_view text);
 List Eval(const List& list, const List& context);
