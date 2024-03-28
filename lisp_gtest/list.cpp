@@ -2,7 +2,6 @@
 #include "list.h"
 
 const List EmptyList;
-const Car_t CarNull{EmptyList};
 
 List::~List()
 {
@@ -37,6 +36,70 @@ List::List(const List& list, const Car_t& car):
 
 List::List(const List& list):
   List(list.cons_)
+{
+}
+
+using ConstCharPtr = char const *;
+std::string_view ReadString(char const* const begin, char const* const end, ConstCharPtr& c)
+{
+  c = std::find(begin, end, '"');
+  return std::string_view{begin, static_cast<size_t>(std::distance(begin,c++))};
+}
+std::string_view ReadSymbol(char const* const begin, char const* const end, ConstCharPtr& c)
+{
+  c = std::find_if(begin, end, [](const auto c)
+      {
+        return c == ')' || isspace(c);
+      });
+  return std::string_view{begin, static_cast<size_t>(std::distance(begin,c))};
+}
+Cons_ const * List::ReadList_(char const* const begin, char const* const end, ConstCharPtr& c)
+{
+  Cons_ const * list = nullptr;
+  auto * next = &list;
+
+  c = begin;
+  while (c != end)
+  {
+    if (c == nullptr)
+    {
+      c = end;
+      break;
+    }
+    if (*c == ')')
+    {
+      ++c;
+      break;
+    }
+    if (*c == '"')
+    {
+      auto str = ReadString(c+1, end, c);
+      *next = new Cons_{std::make_unique<Car_t const>(str), nullptr, 1};
+      next = const_cast<Cons_ const **>(&(**next).cdr_);
+    }
+    else if (*c == '(')
+    {
+      auto cons = ReadList_(c+1, end, c);
+      *next = new Cons_{std::make_unique<Car_t const>(List(cons)), nullptr, 1};
+      next = const_cast<Cons_ const **>(&(**next).cdr_);
+    }
+    else if (!isspace(*c))
+    {
+      auto str = ReadSymbol(c, end, c);
+      *next = new Cons_{std::make_unique<Car_t const>(str), nullptr, 1};
+      next = const_cast<Cons_ const **>(&(**next).cdr_);
+    }
+    else //if (isspace(*c))
+    {
+      ++c;
+    }
+  }
+
+  return list;
+}
+char const * cDummy = nullptr;
+List::List(const std::string_view& s):
+  List(ReadList_(std::find(s.data(), s.data()+s.size(), '(')+1, s.data() + s.size(), cDummy))
 {
 }
 List& List::operator=(List list)

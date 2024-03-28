@@ -36,8 +36,6 @@ enum Car_
   list = variant_index<Car_t, List>(),
 };
 
-extern const Car_t CarNull;
-
 struct Cons_
 {
   std::unique_ptr<Car_t const> const car_;
@@ -49,12 +47,18 @@ class List
 {
   Cons_ const * cons_{};
   List(Cons_ const * cons);
+
+  using ConstCharPtr = char const *;
+  static Cons_ const * ReadList_(char const* const begin, char const* const end, ConstCharPtr& c);
+
 public:
 
   ~List();
   List();
   List(const List& list);
   List(const List& list, const Car_t& value);
+  List(const std::string_view& s);
+
   List& operator=(List list);
 
   List(const std::initializer_list<Car_t>& contents);

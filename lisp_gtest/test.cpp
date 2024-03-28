@@ -49,3 +49,26 @@ TEST(TestList, TestListInitializerList)
   EXPECT_EQ("(a (b c) d)", to_string(List({"a", List({"b", "c"}), "d"})));
 }
 
+TEST(TestList, TestStringToString)
+{
+  struct
+  {
+    size_t line;
+    std::string msg;
+    std::string str;
+  } tests[] =
+  {
+    {__LINE__,"","()"},
+    {__LINE__,"","(a)"},
+    {__LINE__,"","(a b)"},
+    {__LINE__,"","(a (b))"},
+    {__LINE__,"","((a))"},
+    {__LINE__,"","((a) b)"},
+    {__LINE__,"","(a (b (b2)) c (() d d2))"},
+  };
+
+  for (const auto& test : tests)
+  {
+    EXPECT_EQ(test.str, to_string(List(test.str))) << "(" << test.line << ") " << test.msg;
+  }
+}
