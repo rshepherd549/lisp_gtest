@@ -9,7 +9,7 @@ TEST(TestList, TestCreateList)
   const auto list1 = Cons("test", list0);
   EXPECT_TRUE(!IsEmptyList(list1));
 
-  EXPECT_EQ("( test ) ", to_string(list1));
+  EXPECT_EQ("(test)", to_string(list1));
 
   const auto list2 = Cons("test", list0);
   EXPECT_EQ(list1, list2);
@@ -42,10 +42,10 @@ TEST(TestList, TestFind)
 
 TEST(TestList, TestListInitializerList)
 {
-  EXPECT_EQ("( ) ", to_string(List({})));
-  EXPECT_EQ("( a ) ", to_string(List({"a"})));
-  EXPECT_EQ("( a b ) ", to_string(List({"a", "b"})));
-  EXPECT_EQ("( a ( ) ) ", to_string(List({"a", List()})));
-  EXPECT_EQ("( a ( b c ) d ) ", to_string(List({"a", List({"b", "c"}), "d"})));
+  EXPECT_EQ("()", to_string(List({})));
+  EXPECT_EQ("(a)", to_string(List({"a"})));
+  EXPECT_EQ("(a b)", to_string(List({"a", "b"})));
+  EXPECT_EQ("(a ())", to_string(List({"a", List()})));
+  EXPECT_EQ("(a (b c) d)", to_string(List({"a", List({"b", "c"}), "d"})));
 }
 

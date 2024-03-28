@@ -126,17 +126,26 @@ bool operator==(const Car_t& lhs, const Car_t& rhs)
 
 std::string PrintContents(const List& list)
 {
-  const auto car = Car(list);
-  return car ? (to_string(*car) + PrintContents(Cdr(list))) : "";
+  const auto& car = Car(list);
+  const auto& cdr = Cdr(list);
+  std::string s;
+  if (car)
+  {
+    s = to_string(*car);
+    if (Car(cdr))
+      s += " " + PrintContents(cdr);
+  }
+
+  return s;
 }
 std::string to_string(const List& list)
 {
-  return "( " + PrintContents(list) + ") ";
+  return "(" + PrintContents(list) + ")";
 }
 std::string to_string(const Car_t& car)
 {
   if (const auto text = std::get_if<std::string_view>(&car))
-    return std::string{*text} + " ";
+    return std::string{*text};
 
   if (const auto list = std::get_if<List>(&car))
     return to_string(*list);
